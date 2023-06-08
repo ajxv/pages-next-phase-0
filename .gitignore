@@ -17,3 +17,8 @@ venv.bak/
 # Flask stuff:
 instance/
 .webassets-cache
+
+# Custom Folders and files
+uploads/
+*.pdf
+test*.py
