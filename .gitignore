@@ -4,6 +4,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.ipynb_checkpoints/
 
 # Environments
 .env
@@ -18,7 +19,8 @@ venv.bak/
 instance/
 .webassets-cache
 
-# Custom Folders and files
+# Custom
 uploads/
-*.pdf
+output/
 test*.py
+test.*

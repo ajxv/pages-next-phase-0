@@ -1,0 +1,32 @@
+.dataframe, .df, .df td, .df th {
+    border: 1px solid black;
+}
+
+.dataframe, .df {
+    border-collapse: collapse;
+    margin: 25px 10px;
+}
+
+.dataframe td, .dataframe th, .df td, .df th {
+    padding: 5px;
+}
+
+.highlight {
+    background-color: yellow;
+}
+
+@media print {
+    .df {
+        page-break-before: always;
+    }
+    thead { 
+        page-break-before: always;
+        display: table-header-group; 
+    }
+    tfoot { 
+        display: table-row-group; 
+    }
+    tr {
+        page-break-inside: avoid; 
+    }
+}
