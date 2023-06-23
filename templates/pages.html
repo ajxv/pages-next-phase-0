@@ -2,29 +2,18 @@
 
 {% block title %}Pages{% endblock %}
 {% block content %}
-
-  <div class="file-upload d-flex justify-content-center">
+  <div class="d-flex justify-content-center align-items-center mt-5">
     <form method="POST" enctype="multipart/form-data">
-      <label class="font-weight-bold h6 mb-3">Import Data</label>
+      <legend class="text-center"><i class="bi bi-file-earmark-text" style="color: black;"></i></legend>
+      <div class="mb-2">
+        <input class="form-control" type="file" name="input_file" accept="application/pdf" required>
+      </div>
       
-      <div class="file-select mb-3">
-        <div class="file-select-button" id="fileName">Choose File</div>
-        <div class="file-select-name" id="noFile">No file chosen...</div>
-        <input type="file" name="input_file" id="chooseFile" accept="application/pdf" required>
+      <div class="mb-2">
+        <textarea  name="search_key" class="col-md-12 form-control" placeholder="Search Terms (comma seperated)" required></textarea>
       </div>
-      <input type="text" name="search_key" class="col-md-12 mb-3" id="" placeholder="Search Term" required>
-      {% if success %}
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-          Uploaded successfully
-          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-      {% endif %}
-      <div>
-        <input type="submit" value="Upload" class="btn btn-primary">
-      </div>
-    </form>
+      
+      <input type="submit" value="Upload" class="btn btn-primary form-control">
   </div>
 
 {% endblock %}

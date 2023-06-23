@@ -22,5 +22,4 @@ instance/
 # Custom
 uploads/
 output/
-test*.py
-test.*
+temp/
