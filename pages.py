@@ -1,9 +1,9 @@
 from flask import Flask, Response, current_app
-from flask import render_template, request
+from flask import render_template, request, jsonify
 from werkzeug.utils import secure_filename
 import camelot
 import os
-import base64
+from pypdf import PdfReader
 import pandas as pd
 import pdfkit
 
@@ -15,19 +15,25 @@ def index():
     if request.method == "POST":
         # Get the uploaded PDF file and search term from the form
         file = request.files['input_file']
-        pdf_type = request.form['pdf_type']
         search_terms = list(map(str.strip, request.form['search_key'].split(',')))
 
         # Save the uploaded PDF file
         input_pdf = os.path.join(current_app.root_path, f"uploads{os.path.sep}{secure_filename(file.filename)}")
         file.save(input_pdf)
 
-        # Process the PDF file and generate the modified PDF
+        ## Process the PDF file and generate the modified PDF
+        # Check pdf type - esic/epf
+        reader = PdfReader(input_pdf)
+        page = reader.pages[0]
+        text = page.extract_text()
 
-        if pdf_type == 'epf':
+        # searches for headings corresponding to epf/esic pdfs
+        if text.find("EMPLOYEE'S PROVIDENT FUND") != -1:
             output_pdf = process_pdf_epf(input_pdf, search_terms)
-        elif pdf_type == 'esic':
+        elif text.find("Employees' State Insurance Corporation") != -1:
             output_pdf = process_pdf_esic(input_pdf, search_terms)
+        else:
+            return jsonify({'error': 'could not identify pdf type'})
 
         # Return the modified PDF as a response
         return Response(output_pdf, mimetype="application/pdf", headers={"Content-Disposition": f"attachment; filename={file.filename.replace('.pdf', '')}-processed.pdf"})
