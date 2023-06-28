@@ -15,6 +15,7 @@ def index():
     if request.method == "POST":
         # Get the uploaded PDF file and search term from the form
         file = request.files['input_file']
+        pdf_type = request.form['pdf_type']
         search_terms = list(map(str.strip, request.form['search_key'].split(',')))
 
         # Save the uploaded PDF file
@@ -22,8 +23,11 @@ def index():
         file.save(input_pdf)
 
         # Process the PDF file and generate the modified PDF
-        # output_pdf = process_pdf_epf(input_pdf, search_terms)
-        output_pdf = process_pdf_esic(input_pdf, search_terms)
+
+        if pdf_type == 'epf':
+            output_pdf = process_pdf_epf(input_pdf, search_terms)
+        elif pdf_type == 'esic':
+            output_pdf = process_pdf_esic(input_pdf, search_terms)
 
         # Return the modified PDF as a response
         return Response(output_pdf, mimetype="application/pdf", headers={"Content-Disposition": f"attachment; filename={file.filename.replace('.pdf', '')}-processed.pdf"})
@@ -126,13 +130,6 @@ def process_pdf_esic(input_pdf, search_terms):
     # extract tables
     table0 = camelot.read_pdf(input_pdf, pages='1', line_scale=40)[0].df.iloc[:2]
     extracted_tables = camelot.read_pdf(input_pdf, pages='all', flavor='stream')
-
-    # # clean data
-    # for table in extracted_tables:
-    #     for index in reversed(range(2, table.df.shape[0])):
-    #         if table.df.iloc[index][4] and not table.df.iloc[index][3]:
-    #             table.df.iloc[index - 1][4] += f" {table.df.iloc[index][4]}"
-    #             table.df.drop(index, inplace=True)
 
     tables = [table0.drop(table0.columns[[1, 2, 4, 6, 8, 9, 10]], axis=1)]
 
