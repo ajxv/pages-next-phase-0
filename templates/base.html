@@ -23,11 +23,14 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
-                      <a class="navbar-brand" href="#">
+                      <a class="navbar-brand" href="{{ url_for('index') }}">
                         <i class="bi bi-file-earmark-text" style="color: black;"></i>
                       </a>
-                      <li class="nav-item" id="import_data">
-                        <a class="nav-link" href="#">Pages</a>
+                      <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">ProcessPdf</a>
+                      </li>
+                      <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('pdf2excel') }}">pdf2excel</a>
                       </li>
                     </ul>
                   </div>

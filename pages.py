@@ -1,4 +1,4 @@
-from flask import Flask, Response, current_app
+from flask import Flask, Response, current_app, send_file
 from flask import render_template, request, jsonify
 from werkzeug.utils import secure_filename
 import camelot
@@ -220,3 +220,45 @@ def process_pdf_esic(input_pdf, search_terms):
     }
 
     return pdfkit.from_string(combined_html, css="static/df_table.css", options=options)
+
+
+@app.route("/pdf2excel", methods=['POST', 'GET'])
+def pdf2excel():
+    if request.method == "POST":
+        # Get the uploaded PDF file and search term from the form
+        file = request.files['input_file']
+
+        # Save the uploaded PDF file
+        input_pdf = os.path.join(current_app.root_path, f"uploads{os.path.sep}{secure_filename(file.filename)}")
+        file.save(input_pdf)
+
+        ## Process the PDF file and generate the modified PDF
+        # Check pdf type - esic/epf
+        reader = PdfReader(input_pdf)
+        page = reader.pages[0]
+        text = page.extract_text()
+        # searches for headings corresponding to epf/esic pdfs
+        # EPF
+        if text.find("EMPLOYEE'S PROVIDENT FUND") != -1: 
+            # extract tables
+            tables = camelot.read_pdf(input_pdf, pages='1-3', line_scale=40)
+        # ESIC
+        elif text.find("Employees' State Insurance Corporation") != -1: 
+            # extract tables
+            tables = camelot.read_pdf(input_pdf, pages='1-3', flavor='stream')
+        else:
+            return jsonify({'error': 'could not identify pdf type'})
+        
+
+        # write tables to excel
+        excel_out_file = file.filename.replace('.pdf', '.xlsx')
+        row = 0
+        with pd.ExcelWriter(excel_out_file) as writer:
+            for table in tables:
+                table.df.to_excel(writer, index=False, header=False, startrow=row)
+                row += len(table.df.index) + 2
+
+        # Return the modified PDF as a response
+        return send_file(excel_out_file, mimetype="application/pdfapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet", download_name=excel_out_file)
+
+    return render_template("pdf2excel.html")
