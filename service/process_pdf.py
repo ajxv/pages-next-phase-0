@@ -1,44 +1,24 @@
-from flask import Flask, Response, current_app, send_file
-from flask import render_template, request, jsonify
-from werkzeug.utils import secure_filename
+import pdfkit
 import camelot
 import os
-from pypdf import PdfReader
+from flask import current_app
 import pandas as pd
-import pdfkit
+from pypdf import PdfReader
 
-app = Flask(__name__)
 
-@app.route("/", methods=['POST', 'GET'])
-def index():
+def get_pdf_type(input_pdf):
+    # Check pdf type - esic/epf
+    reader = PdfReader(input_pdf)
+    page = reader.pages[0]
+    text = page.extract_text()
 
-    if request.method == "POST":
-        # Get the uploaded PDF file and search term from the form
-        file = request.files['input_file']
-        search_terms = list(map(str.strip, request.form['search_key'].split(',')))
-
-        # Save the uploaded PDF file
-        input_pdf = os.path.join(current_app.root_path, f"uploads{os.path.sep}{secure_filename(file.filename)}")
-        file.save(input_pdf)
-
-        ## Process the PDF file and generate the modified PDF
-        # Check pdf type - esic/epf
-        reader = PdfReader(input_pdf)
-        page = reader.pages[0]
-        text = page.extract_text()
-
-        # searches for headings corresponding to epf/esic pdfs
-        if text.find("EMPLOYEE'S PROVIDENT FUND") != -1:
-            output_pdf = process_pdf_epf(input_pdf, search_terms)
-        elif text.find("Employees' State Insurance Corporation") != -1:
-            output_pdf = process_pdf_esic(input_pdf, search_terms)
-        else:
-            return jsonify({'error': 'could not identify pdf type'})
-
-        # Return the modified PDF as a response
-        return Response(output_pdf, mimetype="application/pdf", headers={"Content-Disposition": f"attachment; filename={file.filename.replace('.pdf', '')}-processed.pdf"})
-
-    return render_template("pages.html")
+    # searches for headings corresponding to epf/esic pdfs
+    if text.find("EMPLOYEE'S PROVIDENT FUND") != -1:
+        return "epf"
+    elif text.find("Employees' State Insurance Corporation") != -1:
+        return "esic"
+    else:
+        return False
 
 def process_pdf_epf(input_pdf, search_terms):
 
@@ -221,44 +201,23 @@ def process_pdf_esic(input_pdf, search_terms):
 
     return pdfkit.from_string(combined_html, css="static/df_table.css", options=options)
 
+def pdf_to_excel(input_pdf, pdf_type):
+    if pdf_type == "epf":
+        # extract tables
+        tables = camelot.read_pdf(input_pdf, pages='1-3', line_scale=40)
+    elif pdf_type == "esic":
+        # extract tables
+        tables = camelot.read_pdf(input_pdf, pages='1-3', flavor='stream')
 
-@app.route("/pdf2excel", methods=['POST', 'GET'])
-def pdf2excel():
-    if request.method == "POST":
-        # Get the uploaded PDF file and search term from the form
-        file = request.files['input_file']
+    # write tables to excel
+    excel_out_file = "file.filename.replace('.pdf', '.xlsx')"
+    row = 0
+    with pd.ExcelWriter(excel_out_file) as writer:
+        for table in tables:
+            table.df.to_excel(writer, index=False, header=False, startrow=row)
+            row += len(table.df.index) + 2
 
-        # Save the uploaded PDF file
-        input_pdf = os.path.join(current_app.root_path, f"uploads{os.path.sep}{secure_filename(file.filename)}")
-        file.save(input_pdf)
+    # # Return the modified PDF as a response
+    # return send_file(excel_out_file, mimetype="application/pdfapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet", download_name=excel_out_file)
 
-        ## Process the PDF file and generate the modified PDF
-        # Check pdf type - esic/epf
-        reader = PdfReader(input_pdf)
-        page = reader.pages[0]
-        text = page.extract_text()
-        # searches for headings corresponding to epf/esic pdfs
-        # EPF
-        if text.find("EMPLOYEE'S PROVIDENT FUND") != -1: 
-            # extract tables
-            tables = camelot.read_pdf(input_pdf, pages='1-3', line_scale=40)
-        # ESIC
-        elif text.find("Employees' State Insurance Corporation") != -1: 
-            # extract tables
-            tables = camelot.read_pdf(input_pdf, pages='1-3', flavor='stream')
-        else:
-            return jsonify({'error': 'could not identify pdf type'})
-        
-
-        # write tables to excel
-        excel_out_file = file.filename.replace('.pdf', '.xlsx')
-        row = 0
-        with pd.ExcelWriter(excel_out_file) as writer:
-            for table in tables:
-                table.df.to_excel(writer, index=False, header=False, startrow=row)
-                row += len(table.df.index) + 2
-
-        # Return the modified PDF as a response
-        return send_file(excel_out_file, mimetype="application/pdfapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet", download_name=excel_out_file)
-
-    return render_template("pdf2excel.html")
+    return excel_out_file
