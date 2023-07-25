@@ -55,7 +55,7 @@ def pdf2excel():
         # find pdf type
         pdf_type = get_pdf_type(input_pdf)
         if pdf_type:
-            out_file = pdf_to_excel(input_pdf)    
+            out_file = pdf_to_excel(input_pdf, pdf_type)    
         else:
             return {'error': 'could not identify pdf type'}
 

@@ -210,7 +210,7 @@ def pdf_to_excel(input_pdf, pdf_type):
         tables = camelot.read_pdf(input_pdf, pages='1-3', flavor='stream')
 
     # write tables to excel
-    excel_out_file = "file.filename.replace('.pdf', '.xlsx')"
+    excel_out_file = f"out.xlsx"
     row = 0
     with pd.ExcelWriter(excel_out_file) as writer:
         for table in tables:
