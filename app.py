@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 import os
 from api.api import api_bp
 from service.process_pdf import *
+from models import User
 
 app = Flask(__name__)
 
@@ -63,6 +64,33 @@ def pdf2excel():
         return send_file(out_file, mimetype="application/pdfapplication/vnd.openxmlformats-officedocument.spreadsheetml.sheet", download_name=out_file)
 
     return render_template("pdf2excel.html")
+
+@app.route("/register", methods=['POST', 'GET'])
+def register():
+    if request.method == "POST":
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+
+        uid = User().create(name=username, email=email, password=password)
+
+
+        return f"{uid}"
+    
+    return render_template('register.html')
+
+@app.route("/login", methods=['POST', 'GET'])
+def login():
+    if request.method == "POST":
+        email = request.form['email']
+        password = request.form['password']
+        
+        user = User().login(email=email, password=password)
+
+        return f"{user}"
+     
+    return render_template('login.html')
+
 
 if __name__ == "__main__":
     # Check if required folders exist
